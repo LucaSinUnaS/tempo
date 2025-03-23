@@ -30,6 +30,20 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Install Android SDK tools
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          yes | sudo apt-get update
+          yes | sudo apt-get install unzip
+
+      - name: Install build-tools 34.0.0
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          sdkmanager --install "build-tools;34.0.0"
+
+
       - name: Install build-tools 34.0.0
         run: sdkmanager "build-tools;34.0.0"
 
