@@ -2,8 +2,6 @@ name: Github Release Workflow
 
 on:
   push:
-    branches:
-      - main
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
 
@@ -30,37 +28,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Install Android SDK tools
-        run: |
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          yes | sudo apt-get update
-          yes | sudo apt-get install unzip
-
-      - name: Install build-tools 34.0.0
-        run: |
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          sdkmanager --install "build-tools;34.0.0"
-
-
-      - name: Install build-tools 34.0.0
-        run: sdkmanager "build-tools;34.0.0"
-
-      - name: Verify build-tools version
+      - name: Setup build tool version variable
+        shell: bash
         run: |
           BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
-          echo "Using build-tools version: $BUILD_TOOL_VERSION"
-
-      - name: Convert Keystore to JKS (if needed)
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-keystore.p12
-          keytool -importkeystore \
-            -srckeystore my-keystore.p12 \
-            -srcstoretype PKCS12 \
-            -destkeystore my-keystore.jks \
-            -deststoretype JKS \
-            -storepass ${{ secrets.KEYSTORE_PASSWORD }}
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+          echo Last build tool version is: $BUILD_TOOL_VERSION
 
       - name: Build APK
         id: build
@@ -76,7 +49,7 @@ jobs:
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD_GITHUB }}
         env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Make artifact
         uses: actions/upload-artifact@v4
@@ -92,12 +65,12 @@ jobs:
           release_name: Release v${{ github.ref }}
           body: '> Changelog coming soon'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload APK
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{steps.sign_apk.outputs.signedReleaseFile}}
