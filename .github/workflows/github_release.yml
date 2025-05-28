@@ -63,8 +63,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release v${{ github.ref_name }}
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
           body: '> Changelog coming soon'
         env:
           GITHUB_TOKEN: ${{ github.token }}
